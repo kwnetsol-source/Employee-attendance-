@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Attendance | NETSOL</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <div id="loginView" class="login-shell">
+    <div class="login-card">
+      <div class="brand-mark">N</div>
+      <p class="eyebrow">NETSOL WORKFORCE</p>
+      <h1>Employee Attendance</h1>
+      <p class="muted">Sign in to manage attendance and duty location.</p>
+      <form id="loginForm">
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="username" placeholder="name@company.com" required />
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="Enter password" required />
+        <button class="btn primary full" type="submit">Sign in</button>
+      </form>
+      <div id="loginMessage" class="message" aria-live="polite"></div>
+      <p class="small muted">Employee and manager accounts are created by an authorized administrator.</p>
+    </div>
+  </div>
+
+  <div id="appView" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand-row"><div class="brand-mark small-mark">N</div><div><strong>NETSOL</strong><span>ATTENDANCE</span></div></div>
+      <nav id="sideNav">
+        <button class="nav-item active" data-page="dashboard">▦ <span>Dashboard</span></button>
+        <button class="nav-item manager-only hidden" data-page="employees">♙ <span>Employees</span></button>
+        <button class="nav-item manager-only hidden" data-page="locations">⌖ <span>Location Monitor</span></button>
+        <button class="nav-item" data-page="history">◷ <span>Attendance History</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="user-mini"><div class="avatar" id="avatarInitial">U</div><div><strong id="sidebarName">User</strong><span id="sidebarRole">Employee</span></div></div>
+        <button id="logoutBtn" class="btn ghost full">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div><p class="eyebrow" id="pageEyebrow">WORKSPACE</p><h2 id="pageTitle">Dashboard</h2></div>
+        <div class="top-actions"><span class="status-chip"><i></i> Connected</span><span class="date-label" id="todayLabel"></span></div>
+      </header>
+
+      <section id="dashboardPage" class="page">
+        <div class="welcome-row">
+          <div><h3 id="welcomeTitle">Welcome back</h3><p class="muted">Here is your attendance overview.</p></div>
+          <span id="dutyBadge" class="badge neutral">OFF DUTY</span>
+        </div>
+        <div id="managerStats" class="stats-grid manager-only hidden">
+          <article class="stat-card"><span>Total employees</span><strong id="statEmployees">—</strong><small>Registered staff</small></article>
+          <article class="stat-card"><span>On duty</span><strong id="statOnDuty">—</strong><small>Active sessions</small></article>
+          <article class="stat-card"><span>Present today</span><strong id="statPresent">—</strong><small>Attendance started today</small></article>
+        </div>
+        <div id="employeePanel" class="employee-grid">
+          <article class="panel attendance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">TODAY</p><h3>My duty</h3></div><span class="live-dot">● GPS</span></div>
+            <div class="clock" id="clockDisplay">--:--</div>
+            <p class="muted" id="dutyMessage">You are currently off duty.</p>
+            <div class="action-row">
+              <button id="dutyInBtn" class="btn primary">Duty In</button>
+              <button id="dutyOutBtn" class="btn danger" disabled>Duty Out</button>
+            </div>
+            <div class="tracking-note"><span class="pulse"></span><span id="trackingText">Location tracking is stopped.</span></div>
+          </article>
+          <article class="panel info-panel">
+            <p class="eyebrow">ACCOUNT</p><h3 id="employeeName">Employee</h3>
+            <div class="detail-line"><span>Employee ID</span><strong id="employeeCode">—</strong></div>
+            <div class="detail-line"><span>Department</span><strong id="employeeDepartment">—</strong></div>
+            <div class="detail-line"><span>Designation</span><strong id="employeeDesignation">—</strong></div>
+            <div class="detail-line"><span>Last GPS update</span><strong id="lastGps">Not available</strong></div>
+          </article>
+        </div>
+        <article class="panel manager-table-panel manager-only hidden">
+          <div class="panel-heading"><div><p class="eyebrow">LIVE OVERVIEW</p><h3>Employees on duty</h3></div><button class="btn outline" id="refreshManagerBtn">Refresh</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Employee ID</th><th>Duty In</th><th>Status</th></tr></thead><tbody id="onDutyTable"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody></table></div>
+        </article>
+      </section>
+
+      <section id="employeesPage" class="page hidden">
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">DIRECTORY</p><h3>Employees</h3></div><button class="btn outline" id="refreshEmployeesBtn">Refresh</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Name</th><th>Employee ID</th><th>Email</th><th>Department</th><th>Status</th></tr></thead><tbody id="employeesTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody></table></div>
+          <p class="small muted">Create employee login accounts through a trusted admin process. Do not create Auth users using a public browser key.</p>
+        </article>
+      </section>
+
+      <section id="locationsPage" class="page hidden">
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">GPS MONITORING</p><h3>Latest reported locations</h3></div><button class="btn outline" id="refreshLocationsBtn">Refresh</button></div>
+          <div id="map"></div>
+          <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Last received</th><th>Latitude</th><th>Longitude</th><th>Accuracy</th></tr></thead><tbody id="locationsTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody></table></div>
+          <p class="small muted">Markers show the latest GPS record received by the server, not guaranteed real-time positions.</p>
+        </article>
+      </section>
+
+      <section id="historyPage" class="page hidden">
+        <article class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">RECORDS</p><h3>Attendance history</h3></div><button class="btn outline" id="refreshHistoryBtn">Refresh</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Employee</th><th>Duty In</th><th>Duty Out</th><th>Hours</th><th>Status</th></tr></thead><tbody id="historyTable"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody></table></div>
+        </article>
+      </section>
+      <div id="toast" class="toast" role="status"></div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
